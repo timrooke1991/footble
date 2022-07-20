@@ -51,10 +51,6 @@ export class Keyboard extends LitElement {
 
   constructor() {
     super();
-    this.clickHandler = null;
-    this.submitHandler = null;
-    this.deleteHandler = null;
-    this.disabledSubmit = true;
   }
 
   render() {

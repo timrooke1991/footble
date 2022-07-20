@@ -59,8 +59,15 @@ export class Game extends LitElement {
         box-sizing: border-box;
       }
 
+      .letter-row {
+        display: contents;
+      }
+
+   
       .game-tile {
-        border: 2px solid rgb(58, 58, 60);
+        border-width: 2px;
+        border-style: solid;
+        border-color: rgb(58, 58, 60);
         min-width: 50px;
         min-height: 50px;
         font-size: 38px;
@@ -72,19 +79,64 @@ export class Game extends LitElement {
         align-items: center;
       }
 
-      .game-grid div.selected {
-        border: 2px solid #3A3A3C;
-        background-color: #3A3A3C;
+      .letter-row.current > .game-tile.filled {
+        animation: bounce 0.2s ease-in-out;
+        border-color: #ddd;
       }
 
-      .game-grid div.green {
-        border: 2px solid #538d4e;
-        background-color: #538d4e;
+      .game-tile.selected {
+        --border: 2px solid #3A3A3C;
+        --background-color: #3A3A3C;
+        animation: flip 0.5s ease forwards;
       }
 
-      .game-grid div.yellow {
-        border: 2px solid #b59f3b;
-        background-color: #b59f3b;
+      .game-tile.green {
+        --border: 2px solid #538d4e;
+        --background-color: #538d4e;
+        animation: flip 0.5s ease forwards;
+      }
+
+      .game-tile.yellow {
+        --border: 2px solid #b59f3b;
+        --background-color: #b59f3b;
+        animation: flip 0.5s ease forwards;
+      }
+
+      @keyframes flip {
+        0% {
+          transform: rotateX(0);
+          border: 2px solid rgb(58, 58, 60);
+          background-color: black;
+        }
+        45% {
+          transform: rotateX(90deg);
+          border: 2px solid rgb(58, 58, 60);
+          background-color: black;
+        }
+        55% {
+          transform: rotateX(90deg);
+          background: var(--background-color);
+          border: var(--border);
+        }
+        100% {
+          transform: rotateX(0);
+          background: var(--background-color);
+          border: var(--border);
+        }
+      }
+
+      @keyframes bounce {
+        0% {
+          transform: scale(1);
+          border-color: rgb(58, 58, 60);
+        }
+        50% {
+          transform: scale(1.2);
+        }
+        100% {
+          transform: scale(1);
+          border-color: #e5e5e5;
+        }
       }
     `;
   }
@@ -107,7 +159,7 @@ export class Game extends LitElement {
 
 
   isLetter(key) {
-    return /^[a-z]+$/i.test(key);
+    return /^[a-z|A-Z]+$/i.test(key);
   }
 
   getKeyFromEvent(e) {
@@ -115,6 +167,7 @@ export class Game extends LitElement {
   }
 
   selectLetter(e) {
+    console.log(e)
     const key = this.getKeyFromEvent(e);
 
     console.log(e.which, e.type);
@@ -130,7 +183,7 @@ export class Game extends LitElement {
 
 
     if (this.isLetter(key)) {
-      this.currentGuess = `${this.currentGuess}${key}`;
+      this.currentGuess = `${this.currentGuess}${key.toLowerCase()}`;
     }
 
     return;
@@ -139,13 +192,14 @@ export class Game extends LitElement {
   handleSubmit(e) {
     e.preventDefault();
     const key = this.getKeyFromEvent(e);
-
+    console.log(key);
     if (key === 'enter' || e.which === 13) {
       if (this.currentGuess.length !== 5) {
         alert(`Word (${this.currentGuess}) must be 5 letters`);
         return 
       }
 
+      console.log(wordlist, this.currentGuess);
       if (wordlist.includes(this.currentGuess) === false) {
         alert('Word is invalid');
         this.currentGuess = '';
@@ -183,19 +237,21 @@ export class Game extends LitElement {
         <div class="game-grid">
           <div class="board">
             ${map(range(6), (row) =>
-              map(
-                range(5),
-                (col) => 
-                  row === this.count 
-                    ? html`<div class="game-tile">${getLabel(0, col, [this.currentGuess])}</div>`
-                    : html`<div class="game-tile ${getColor(row, col, this.answer, this.guesses)}">${getLabel(row, col, this.guesses)}</div>`
-                )
+              html`<div class="letter-row ${row === this.count ? 'current' : ''}">
+                ${map(
+                  range(5),
+                  (col) => 
+                    row === this.count 
+                      ? html`<div class="game-tile ${col < (this.currentGuess.length) ? 'filled' : ''}">${getLabel(0, col, [this.currentGuess])}</div>`
+                      : html`<div style="animation-delay: 0.${col * 2}s" class="game-tile ${getColor(row, col, this.answer, this.guesses)}">${getLabel(row, col, this.guesses)}</div>`
+                )}
+              </div>`
             )}
           </div>
         </div>
 
       <game-keyboard 
-        .disabled="${this.currentGuess.length !== 5}" 
+        .disableSubmit="${this.currentGuess.length !== 5}" 
         .clickHandler="${(e) => this.selectLetter(e)}"
         .submitHandler="${(e) => this.handleSubmit(e)}"
         .deleteHandler="${(e) => this.handleDelete(e)}"
